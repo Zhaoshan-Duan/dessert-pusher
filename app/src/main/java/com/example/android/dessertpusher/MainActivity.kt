@@ -29,35 +29,16 @@ import androidx.lifecycle.LifecycleObserver
 import com.example.android.dessertpusher.databinding.ActivityMainBinding
 import timber.log.Timber
 
+const val KEY_REVENUE = "revenue_key"
+const val KEY_DESSERT_SOLD = "desserts_sold_key"
+const val KEY_TIMER_SECONDS = "timer_seconds_key"
+
 class MainActivity : AppCompatActivity(), LifecycleObserver {
 
     private var revenue = 0
-    override fun onPause() {
-        super.onPause()
-        Timber.i("onPause Called")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Timber.i("onDestroy Called")
-    }
-
-    override fun onRestart() {
-        super.onRestart()
-        Timber.i("onRestart Called")
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Timber.i("onStop Called")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Timber.i("onResume Called")
-    }
-
     private var dessertsSold = 0
+
+    private lateinit var dessertTimer: DessertTimer
 
     // Contains all the views
     private lateinit var binding: ActivityMainBinding
@@ -72,8 +53,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     data class Dessert(val imageId: Int, val price: Int, val startProductionAmount: Int)
 
     // Create a list of all desserts, in order of when they start being produced
-    private val allDesserts = listOf(
-        Dessert(R.drawable.cupcake, 5, 0),
+    private val allDesserts = listOf(Dessert(R.drawable.cupcake, 5, 0),
         Dessert(R.drawable.donut, 10, 5),
         Dessert(R.drawable.eclair, 15, 20),
         Dessert(R.drawable.froyo, 30, 50),
@@ -85,8 +65,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         Dessert(R.drawable.lollipop, 3000, 4000),
         Dessert(R.drawable.marshmallow, 4000, 8000),
         Dessert(R.drawable.nougat, 5000, 16000),
-        Dessert(R.drawable.oreo, 6000, 20000)
-    )
+        Dessert(R.drawable.oreo, 6000, 20000))
     private var currentDessert = allDesserts[0]
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,6 +79,18 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         binding.dessertButton.setOnClickListener {
             onDessertClicked()
         }
+
+        // set up timer
+        dessertTimer = DessertTimer(this.lifecycle)
+
+        // restore data from bundle
+        if (savedInstanceState != null) {
+            // Get all the game state information from the bundle, set it
+            revenue = savedInstanceState.getInt(KEY_REVENUE)
+            dessertsSold = savedInstanceState.getInt(KEY_DESSERT_SOLD)
+            dessertTimer.secondsCount = savedInstanceState.getInt(KEY_TIMER_SECONDS)
+        }
+
 
         // Set the TextViews to the right values
         binding.revenue = revenue
@@ -154,13 +145,12 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     private fun onShare() {
         val shareIntent = ShareCompat.IntentBuilder.from(this)
             .setText(getString(R.string.share_text, dessertsSold, revenue))
-            .setType("text/plain")
-            .intent
+            .setType("text/plain").intent
         try {
             startActivity(shareIntent)
         } catch (ex: ActivityNotFoundException) {
-            Toast.makeText(this, getString(R.string.sharing_not_available),
-                Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.sharing_not_available), Toast.LENGTH_LONG)
+                .show()
         }
     }
 
@@ -176,10 +166,44 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         return super.onOptionsItemSelected(item)
     }
 
+    override fun onPause() {
+        super.onPause()
+        Timber.i("onPause Called")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Timber.i("onDestroy Called")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Timber.i("onRestart Called")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Timber.i("onStop Called")
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(KEY_REVENUE, revenue)
+        outState.putInt(KEY_DESSERT_SOLD, dessertsSold)
+        outState.putInt(KEY_TIMER_SECONDS, dessertTimer.secondsCount)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Timber.i("onResume Called")
+    }
+
+
     override fun onStart() {
         super.onStart()
-
         // Log.i("MainActivity", "onStartCalled")
         Timber.i("onStart Called")
     }
+
+
 }
